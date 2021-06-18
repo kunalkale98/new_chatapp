@@ -1,4 +1,5 @@
 import os
+import pymysql
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -97,7 +98,8 @@ CHANNEL_LAYERS = {
 }
 
 
-# Databas
+# Database
+pymysql.install_as_MySQLdb()
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
