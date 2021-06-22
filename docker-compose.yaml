@@ -1,0 +1,21 @@
+version: '3'
+services:
+  mysql:
+    image: database_img
+    container_name: database_container
+    volumes:
+    - mysqldata:/var/lib/mysql
+  backend:
+    image: backend_img
+    container_name: backendContainer
+    links:
+    - mysql
+  frontend:
+    image: frontend_img
+    container_name: frontend_conatainer
+    links:
+    - backend
+    ports:
+    - 80:80
+volumes:
+  mysqldata:
