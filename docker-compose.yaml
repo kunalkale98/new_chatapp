@@ -5,15 +5,15 @@ services:
     build: /home/ubuntu/new_chatapp/Database/
     container_name: database_container
     environment:
-    -MYSQL_DATABASE=db_chatapp
-    -MYSQL_USER=kunal
-    -MYSQL_PASSWORD=Kunal2898
-    -MYSQL_ROOT_PASSWORD=Root1234
+    - MYSQL_DATABASE=db_chatapp
+    - MYSQL_USER=kunal
+    - MYSQL_PASSWORD=Kunal2898
+    - MYSQL_ROOT_PASSWORD=Root1234
     volumes:
     - mysqldata:/var/lib/mysql
   backend:
     image: backend_img
-    build: /home/ubuntu/new_chatapp/
+    build: /home/ubuntu/new_chatapp/backend/
     container_name: backendContainer
     links:
     - mysql
