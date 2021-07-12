@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-pod
+  labels:
+    app: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: frontend-container
+        image: nginx
+        ports:
+        - name: http
+          containerPort: 80
+        resources:
+          limits:
+            cpu: 400m
+          requests:
+            cpu: 200m
+        volumeMounts:
+        - name: chatapp
+          mountPath: /etc/nginx/conf.d/
+          readOnly: true
+      volumes:
+      - name: chatapp
+        configMap:
+          name: chatapp-conf
+
+
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: chatapp-conf
+data:
+  nginxconf.conf: |
+                  server{
+                  listen 80;
+                  location / {
+                  proxy_pass http://backend:8000;
+                   }
+                  }
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  labels:
+    app: nginx
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+  selector:
+    app: nginx
