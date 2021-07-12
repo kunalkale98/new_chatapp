@@ -1,0 +1,76 @@
+---
+-
+  become: true
+  hosts: server2
+  name: backend
+  tasks:
+    -
+      apt: "update_cache=yes force_apt_get=yes cache_valid_time=3600"
+      name: "Update apt-get repo and cache"
+    -
+      apt:
+        name: python3-pip
+        state: present
+      name: "Install Pip3"
+    -
+      apt:
+        name: python-dev
+        state: present
+      name: "Install Python-dev"
+    -
+      apt:
+        name: mysql-client
+        state: present
+      name: "Install mysql"
+    -
+      apt:
+        name: git
+        state: present
+      name: "Install Git"
+    -
+      become: true
+      shell: sudo pip3 install PyMySQL
+      name: "install pymql"
+    -
+      apt: "update_cache=yes force_apt_get=yes cache_valid_time=3600"
+      name: "Update apt-get repo and cache"
+   # -
+   #   name: "Install Virtualenv"
+   #   pip:
+   #     #executable: pip-3.3
+   #     name: virtualenv
+   #     state: present
+    -
+      git:
+        dest: /new_chatapp
+        repo: "https://github.com/kunalkale98/new_chatapp.git"
+      name: "Git clone"
+   # -
+   #   args:
+   #     chdir: /new_chatapp/
+   #   name: "Create venv"
+   #   shell: "virtualenv venv"
+   # -
+   #   become_user: root
+   #   args:
+   #     chdir: /new_chatapp/
+   #     executable: /bin/bash
+   #   name: "Activate venv"
+   #   shell: "source venv/bin/activate"
+     -
+      name: "Installing requirements.txt"
+      pip:
+        requirements: /new_chatapp/requirements.txt
+        state: present
+   #     virtualenv: /new_chatapp/venv
+   #     virtualenv_command: virtualenv-3.6
+    -
+      become_user: root
+      copy:
+        dest: /etc/systemd/system/chatapp.service
+        src: /home/ubuntu/chatapp.service
+      name: "Copy conf file"
+    -
+      name: "Start Application"
+      script: startServer.sh
+  user: ubuntu
