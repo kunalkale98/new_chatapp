@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: database-pod
+  labels:
+    app: mysql
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - image: mysql:5.6
+        name: database-container
+        env:
+        - name: MYSQL_USER
+          value: kunal
+        - name: MYSQL_PASSWORD
+          value: Kunal2898
+        - name: MYSQL_ROOT_PASSWORD
+          value: Root1234
+        - name: MYSQL_DATABASE
+          value: db_chatapp
+        ports:
+        - name: tcp
+          containerPort: 3306
+        volumeMounts:
+        - name: mysql-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-storage
+        hostPath:
+      # directory location on host
+         path: /home/ubuntu/data
+      # this field is optional
+         type: DirectoryOrCreate
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: database
+  labels:
+    app: mysql
+spec:
+  ports:
+  - port: 3306
+    protocol: TCP
+  selector:
+    app: mysql
