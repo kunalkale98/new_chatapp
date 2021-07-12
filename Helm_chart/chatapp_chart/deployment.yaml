@@ -1,0 +1,206 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}-auth
+data:
+  userpass: {{ .Values.secret.userpass | b64enc }}
+  username: {{ .Values.secret.username | b64enc }}
+  rootpass: {{ .Values.secret.rootpass | b64enc }}
+  dbname: {{ .Values.secret.dbname | b64enc }}
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.database.podname }}
+  labels:
+    app: {{ .Values.database.app }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.database.app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.database.app }}
+    spec:
+      containers:
+      - image: {{ .Values.database.image.name }}:{{ .Values.database.image.tag }}
+        name: {{ .Values.database.containername }}
+        env:
+        - name: "MYSQL_USER"
+          valueFrom:
+            secretKeyRef:
+              key:  username
+              name: {{ .Release.Name }}-auth
+        - name: "MYSQL_PASSWORD"
+          valueFrom:
+            secretKeyRef:
+              key:  userpass
+              name: {{ .Release.Name }}-auth
+        - name: "MYSQL_ROOT_PASSWORD"
+          valueFrom:
+            secretKeyRef:
+              key:  rootpass
+              name: {{ .Release.Name }}-auth
+        - name: "MYSQL_DATABASE"
+          valueFrom:
+            secretKeyRef:
+              key:  dbname
+              name: {{ .Release.Name }}-auth
+        ports:
+        - name: {{ .Values.database.containerportname }}
+          containerPort: {{ .Values.database.containerport }}
+        volumeMounts:
+        - name: mysql-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-storage
+        hostPath:
+      # directory location on host
+         path: /home/ubuntu/data
+      # this field is optional
+         type: DirectoryOrCreate
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.database.servicename }}
+  labels:
+    app: {{ .Values.database.app  }}
+spec:
+  ports:
+  - port: {{ .Values.database.serviceport }}
+    protocol: {{ .Values.database.serviceprotocol }}
+  selector:
+    app: {{ .Values.database.app }}
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.backend.podname }}
+  labels:
+    app: {{ .Values.backend.app }}
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.backend.app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.backend.app }}
+    spec:
+      containers:
+      - name: {{ .Values.backend.containername }}
+        image: {{ .Values.backend.image.url }}:{{ .Values.backend.image.tag }}
+        ports:
+        - containerPort: {{ .Values.backend.containerport }}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.backend.servicename }}
+  labels:
+    app: {{ .Values.backend.app }}
+spec:
+  ports:
+  - port: {{ .Values.backend.serviceport }}
+    protocol: {{ .Values.backend.serviceprotocol }}
+  selector:
+    app: {{ .Values.backend.app }}
+
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.frontend.podname }}
+  labels:
+    app: {{ .Values.frontend.app }}
+spec:
+  replicas: {{ .Values.frontend.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.frontend.app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.frontend.app }}
+    spec:
+      containers:
+      - name: {{ .Values.frontend.containername }}
+        image: {{ .Values.frontend.image }}
+        ports:
+        - name: {{ .Values.frontend.containerportname }}
+          containerPort: {{ .Values.frontend.containerport }}
+        #resources:
+          #limits:
+          #  cpu:
+          #requests:
+          #  cpu:
+        volumeMounts:
+        - name: chatapp
+          mountPath: /etc/nginx/conf.d/
+          readOnly: true
+      volumes:
+      - name: {{ .Values.frontend.volumename }}
+        configMap:
+          name: {{ .Values.frontend.configMapname }}
+
+
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.frontend.configMapname }}
+data:
+  nginxconf.conf: |
+                  server{
+                  listen 80;
+                  location / {
+                  proxy_pass http://backend:8000;
+                   }
+                  }
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.frontend.servicename }}
+  labels:
+    app: {{ .Values.frontend.app }}
+spec:
+  ports:
+  - port: {{ .Values.frontend.serviceport }}
+    protocol: {{ .Values.frontend.serviceprotocol }}
+  selector:
+    app: {{ .Values.frontend.app }}
+
+
+---
+
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: {{ .Values.ingress.name }}
+spec:
+ #rules:
+ #- host: "kunalchatapp.tk"
+ #  http:
+ #    paths:
+ #    - path: /
+ backend:
+   serviceName: {{ .Values.ingress.servicename }}
+   servicePort: {{ .Values.ingress.serviceport }}
