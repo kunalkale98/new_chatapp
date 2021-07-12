@@ -1,0 +1,49 @@
+---
+-
+  become: true
+  hosts: server3
+  name: frontend
+  tasks:
+    -
+      apt: "update_cache=yes force_apt_get=yes cache_valid_time=3600"
+      name: "Update apt-get repo and cache"
+    -
+      apt:
+        name: nginx
+        state: present
+      name: "Install nginx"
+    -
+      file:
+        path: /etc/nginx/sites-available/default
+        state: absent
+      name: "Delete default conf in Sites-available"
+    -
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      name: "Delete default conf in Sites-enabled"
+    -
+      copy:
+        dest: /etc/nginx/sites-available/chatapp
+        src: /home/ubuntu/chatapp
+      name: "Copy conf file"
+    -
+      become_user: root
+      name: "Command to link file"
+      shell: "sudo ln -s /etc/nginx/sites-available/chatapp /etc/nginx/sites-enabled"
+    -
+      name: "Start NGiNX"
+      service:
+        name: nginx
+        state: started
+    -
+      name: "Restart NGiNX"
+      service:
+        name: nginx
+        state: restarted
+    -
+      name: "Enable NGiNX"
+      service:
+        name: nginx
+        enabled: yes
+  user: ubuntu
