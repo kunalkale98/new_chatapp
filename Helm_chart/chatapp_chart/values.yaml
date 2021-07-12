@@ -1,0 +1,63 @@
+name: db-secret-auth
+secret:
+  userpass: Kunal2898
+  username: kunal
+  rootpass: Root1234
+  dbname: db_chatapp
+
+database:
+  podname: database-pod
+  app: db-mysql
+  image:
+    name: mysql
+    tag: 5.6
+  containername: database-container
+  containerportname: tcp
+  containerport: 3306
+
+  servicename: database
+  serviceport: 3306
+  serviceprotocol: TCP
+
+
+backend:
+  podname: backend-pod
+  app: chatapp
+  replicas: 1
+  containername: backend-container
+  image:
+    url: 022334287241.dkr.ecr.us-east-1.amazonaws.com/docker_backend
+    tag: latest
+  containerport: 8000
+
+  servicename: backend
+  serviceport: 8000
+  serviceprotocol: TCP
+
+
+
+frontend:
+  podname: frontend-pod
+  app: nginx
+  replicas: 1
+  containername: frontend-container
+  image: nginx
+  containerportname: http
+  containerport: 80
+  #limits:
+  #  cpu: 200
+  #requests:
+  #  cpu: 100
+  volumename: chatapp
+  configMapname: chatapp-conf
+
+
+  servicename: frontend
+  serviceport: 80
+  serviceprotocol: TCP
+
+
+ingress:
+  name: basic-ingress
+  servicename: frontend
+  serviceport: 80
